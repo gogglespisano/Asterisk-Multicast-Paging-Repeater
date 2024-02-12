@@ -15,6 +15,17 @@ poly_group = 26
 poly_sender_id = 'Asterisk'
 ```
 
+### Poly XML Configuration
+Minimum example settings to receive group page (group 1 is page group 26 above (25 + 1))
+```
+ptt.address="224.0.1.116"
+ptt.port="7659"
+ptt.pageMode.enable="1"
+ptt.pageMode.group.1.available="1"
+ptt.pageMode.group.1.allowReceive="1"
+ptt.pageMode.group.1.subscribed"1"
+```
+
 SpectraLink PTT uses ports 5001 to 5025 mapped to the channels 1 to 25.
 
 **Note: Changing Poly Paging multicast address or port requires a reboot of the phone,
