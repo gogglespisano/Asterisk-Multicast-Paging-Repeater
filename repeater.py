@@ -42,24 +42,29 @@ class Repeater:
             await asyncio.sleep(1.0)
 
     async def on_recv_asterisk_data(self, data: bytes, addr: tuple[str, int]) -> None:
-        packet = PolyPacket(data, addr[0])
-        # print(str(rtp))
+        try:
+            packet = PolyPacket(data, addr[0])
+            # print(str(rtp))
 
-        # find the existing session or None if not found
-        async with self.__sessions:
-            session = next((x for x in self.__sessions if x.session_id == packet.session_id and x.source_id == packet.source_id), None)
-
-        # create and start a new session if session not found
-        if session is None:
-            # create a poly session
+            # find the existing session or None if not found
             async with self.__sessions:
-                session = PolySession(packet)
-                self.__sessions.append(session)
-            print(f"Session {session.id} begin")
-            session.start()
+                session = next((x for x in self.__sessions if x.session_id == packet.session_id and x.source_id == packet.source_id), None)
 
-        # add this packet to the session
-        await session.on_packet(packet)
+            # create and start a new session if session not found
+            if session is None:
+                # create a poly session
+                async with self.__sessions:
+                    session = PolySession(packet)
+                    self.__sessions.append(session)
+                print(f"Session {session.id} begin")
+                session.start()
+
+            # add this packet to the session
+            await session.on_packet(packet)
+
+        except Exception as ex:
+            # ignore bad incoming packets
+            print(ex)
 
     async def on_end_of_session(self, session):
         # remove the session for the list
