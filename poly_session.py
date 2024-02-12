@@ -14,7 +14,8 @@ class PolySession(Session):
         self.__prev_audio = None
 
     def start(self):
-        asyncio.create_task(self.__send_page())
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.__send_page())
 
     async def __send_page(self):
         # send alert packets
@@ -26,32 +27,34 @@ class PolySession(Session):
         timestamp = 0
         # send transmit packets at regular intervals
         # record time at start of audio stream
-        start_ms = time.time_ns() // 1000000
-        packet = 0
+        start_ms = self.__get_time_ms()
+        # print(start_ms)
+        transmit_packet = 0
         while True:
             async with self._packet_queue:
                 # we are 1 second behind the imcoming stream
                 # so when we run out of data the stream has ended
                 if not any(self._packet_queue):
                     break
-                rtp = self._packet_queue.pop(0)
-            # print(str(rtp))
+                packet = self._packet_queue.pop(0)
+            # print(str(packet))
 
             # transmit this audio packet
-            await rtp.send_poly_transmit_packet(self.__prev_audio, timestamp)
+            await packet.send_poly_transmit_packet(self.__prev_audio, timestamp)
             # save the audio for the next audio packet
-            self.__prev_audio = bytes(rtp.audio)
+            self.__prev_audio = bytes(packet.audio)
 
             # advance the timetamp
             timestamp += self._timestamp_increment
 
             # sleep until the time for the next audio packet
-            now_ms = time.time_ns() // 1000000
-            packet += 1
-            sleep_ms = start_ms + packet * self._audio_ms_length - now_ms
+            now_ms = self.__get_time_ms()
+            # print(now_ms)
+            transmit_packet += 1
+            sleep_ms = start_ms + transmit_packet * self._audio_length_ms - now_ms
             # wait for the time to send the next packet
-            if sleep_ms > 0:
-                await asyncio.sleep(sleep_ms / 1000.0)
+            # always at least yield to let other stuff run
+            await asyncio.sleep(max(0.001, sleep_ms / 1000.0))
 
             # continue sending audio packets
 
@@ -64,3 +67,7 @@ class PolySession(Session):
         await self.__first_packet.send_poly_end_packets()
 
         await self.on_end_of_session(self)
+
+    @staticmethod
+    def __get_time_ms() -> float:
+        return time.monotonic() * 1000.0

@@ -2,8 +2,6 @@ import socket
 import struct
 from asyncio import DatagramProtocol
 
-IP_DONTFRAGMENT = 14
-
 
 class PolyProtocol(DatagramProtocol):
     def __init__(self, multicast_ttl):
@@ -15,8 +13,17 @@ class PolyProtocol(DatagramProtocol):
         sock = self.__transport.get_extra_info('socket')
         multicast_ttl = struct.pack('@i', self.__multicast_ttl)
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, multicast_ttl)
-        dont_fragment = struct.pack('@i', 1)
-        sock.setsockopt(socket.IPPROTO_IP, IP_DONTFRAGMENT, dont_fragment)
+        # try a couple of different methods to set the don't fragment bit
+        try:
+            # IP_MTU_DISCOVER, IP_PMTUDISC_DO
+            sock.setsockopt(socket.IPPROTO_IP, 10, 2)
+        except Exception as ex:
+            print("Warning: IP_MTU_DISCOVER, IP_PMTUDISC_DO", ex)
+        try:
+            # IP_DONTFRAG
+            sock.setsockopt(socket.IPPROTO_IP, 14, 1)
+        except Exception as ex:
+            print("Warning: IP_DONTFRAG", ex)
 
     def connection_lost(self, ex):
         print(ex)

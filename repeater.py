@@ -23,11 +23,10 @@ class Repeater:
     def start(self):
         Session.on_end_of_session = self.on_end_of_session
 
-        asyncio.create_task(self.__run())
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.__run(loop))
 
-    async def __run(self):
-        loop = asyncio.get_running_loop()
-
+    async def __run(self, loop):
         self.__poly_transport, Config.the().poly_protocol = await loop.create_datagram_endpoint(
             lambda: PolyProtocol(Config.the().poly_multicast_ttl),
             remote_addr=(Config.the().poly_multicast_address, Config.the().poly_multicast_port))
@@ -41,10 +40,10 @@ class Repeater:
         while True:
             await asyncio.sleep(1.0)
 
-    async def on_recv_asterisk_data(self, data: bytes, addr: tuple[str, int]) -> None:
+    async def on_recv_asterisk_data(self, data: bytes, addr: (str, int)) -> None:
         try:
             packet = PolyPacket(data, addr[0])
-            # print(str(rtp))
+            # print(str(packet))
 
             # find the existing session or None if not found
             async with self.__sessions:

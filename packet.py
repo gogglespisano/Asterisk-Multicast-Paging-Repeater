@@ -44,7 +44,7 @@ class Packet:
     def audio(self) -> bytes:
         return self._audio
 
-    def payload_details(self) -> tuple[int, float]:
+    def payload_details(self) -> (int, float):
         audio_data_length = len(self._audio)
 
         if self._payload_type == _payload_g711u:

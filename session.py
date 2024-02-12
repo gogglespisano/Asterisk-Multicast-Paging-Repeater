@@ -11,7 +11,7 @@ class Session:
         self._session_id = self._first_packet.session_id
         self._source_id = self._first_packet.source_id
         self._packet_queue = AsyncList()
-        self._timestamp_increment, self._audio_ms_length = self._first_packet.payload_details()
+        self._timestamp_increment, self._audio_length_ms = self._first_packet.payload_details()
 
     @property
     def id(self) -> str:

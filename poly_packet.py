@@ -24,7 +24,7 @@ class PolyPacket(Packet):
             PolyPacket.send_poly_data(self.__encode_poly_packet(False, True))
             await asyncio.sleep(0.030)
 
-    def __encode_poly_packet(self, alert: bool, end: bool, prev_audio: bytes | None = None, timestamp: int = 0) -> bytes:
+    def __encode_poly_packet(self, alert: bool, end: bool, prev_audio: bytes = None, timestamp: int = 0) -> bytes:
         opcode = 0x0F if alert else 0xFF if end else 0x10
 
         # create the data with the header
