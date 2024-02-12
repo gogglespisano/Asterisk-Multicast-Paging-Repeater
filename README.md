@@ -1,5 +1,7 @@
 # Asterisk Multicast Paging Repeater
 
+For compatibility with FreePBX, use the Python 3.6 virtual environment
+
 ### Configuration
 
 In _config.py_:
@@ -25,7 +27,6 @@ ptt.pageMode.group.1.available="1"
 ptt.pageMode.group.1.allowReceive="1"
 ptt.pageMode.group.1.subscribed"1"
 ```
-
 SpectraLink PTT uses ports 5001 to 5025 mapped to the channels 1 to 25.
 
 **Note: Changing Poly Paging multicast address or port requires a reboot of the phone,
