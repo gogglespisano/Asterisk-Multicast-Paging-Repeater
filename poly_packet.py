@@ -16,7 +16,7 @@ class PolyPacket(Packet):
             PolyPacket.send_poly_data(self.__encode_poly_packet(True, False))
             await asyncio.sleep(0.030)
 
-    async def send_poly_transmit_packet(self, prev_audio: bytes, timestamp: int) -> None:
+    def send_poly_transmit_packet(self, prev_audio: bytes, timestamp: int) -> None:
         PolyPacket.send_poly_data(self.__encode_poly_packet(False, False, prev_audio, timestamp))
 
     async def send_poly_end_packets(self) -> None:

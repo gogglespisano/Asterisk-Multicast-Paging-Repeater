@@ -4,6 +4,8 @@ import time
 from poly_packet import PolyPacket
 from session import Session
 
+_packet_pre_sleep_ms = 2
+
 
 class PolySession(Session):
 
@@ -25,11 +27,9 @@ class PolySession(Session):
         # the poly phones are very sensitive to the timestamps on the audio packets
         # so recreate the timestamps to avoid problems (core dumps on the phone!)
         timestamp = 0
-        # send transmit packets at regular intervals
-        # record time at start of audio stream
-        start_ms = self.__get_time_ms()
+        start_ms = 0.0
         # print(start_ms)
-        transmit_packet = 0
+        packet_number = 0
         while True:
             async with self._packet_queue:
                 # we are 1 second behind the imcoming stream
@@ -39,22 +39,34 @@ class PolySession(Session):
                 packet = self._packet_queue.pop(0)
             # print(str(packet))
 
+            # sleep until the time for the next audio packet
+            now_ms = self.__get_time_ms()
+            # align the timing of the first packet
+            if packet_number == 0:
+                # record time at start of audio stream
+                # always based timing off of the start time so that we don't accumulate error
+                start_ms = now_ms
+            # first do an async sleep to get close to the time
+            sleep_ms = start_ms + ((packet_number * self._audio_length_ms) - _packet_pre_sleep_ms) - now_ms
+            # wait for the time close to sending the next packet
+            if sleep_ms > 0.1:
+                await asyncio.sleep(sleep_ms / 1000.0)
+
+            now_ms = self.__get_time_ms()
+            # wait (blocking) for the last bit of time before sending the packer
+            sleep_ms = start_ms + (packet_number * self._audio_length_ms) - now_ms
+            # wait for the time to send the next packet
+            if sleep_ms > 0.1:
+                time.sleep(sleep_ms / 1000.0)
+
             # transmit this audio packet
-            await packet.send_poly_transmit_packet(self.__prev_audio, timestamp)
+            packet.send_poly_transmit_packet(self.__prev_audio, timestamp)
             # save the audio for the next audio packet
             self.__prev_audio = bytes(packet.audio)
 
-            # advance the timetamp
+            # advance the timetamp and packet number
             timestamp += self._timestamp_increment
-
-            # sleep until the time for the next audio packet
-            now_ms = self.__get_time_ms()
-            # print(now_ms)
-            transmit_packet += 1
-            sleep_ms = start_ms + transmit_packet * self._audio_length_ms - now_ms
-            # wait for the time to send the next packet
-            # always at least yield to let other stuff run
-            await asyncio.sleep(max(0.001, sleep_ms / 1000.0))
+            packet_number += 1
 
             # continue sending audio packets
 
