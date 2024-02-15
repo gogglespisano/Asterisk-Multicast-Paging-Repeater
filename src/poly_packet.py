@@ -9,7 +9,7 @@ class PolyPacket(Packet):
     send_poly_data = None
 
     def __init__(self, data: bytes, addr: str):
-        super().__init__(data, addr)
+        super().__init__(__name__, data, addr)
 
     async def send_poly_alert_packets(self) -> None:
         for _ in range(31):

@@ -1,12 +1,14 @@
 from async_list import AsyncList
+from log import Log
 from packet import Packet
 
 
-class Session:
+class Session(Log):
 
     on_end_of_session = None
 
-    def __init__(self, first_packet: Packet):
+    def __init__(self, log_name: str, first_packet: Packet):
+        super().__init__(log_name)
         self._first_packet = first_packet
         self._session_id = self._first_packet.session_id
         self._source_id = self._first_packet.source_id

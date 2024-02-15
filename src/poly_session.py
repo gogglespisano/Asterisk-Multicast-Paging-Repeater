@@ -10,7 +10,7 @@ _packet_pre_sleep_ms = 2
 class PolySession(Session):
 
     def __init__(self, first_packet: PolyPacket):
-        super().__init__(first_packet)
+        super().__init__(__name__, first_packet)
         self.__first_packet = first_packet
 
         self.__prev_audio = None
@@ -23,12 +23,12 @@ class PolySession(Session):
         # send alert packets
         await self.__first_packet.send_poly_alert_packets()
 
-        print(f"Session {self.id} streaming started")
+        self.log.info(f"Session {self.id} streaming started")
         # the poly phones are very sensitive to the timestamps on the audio packets
         # so recreate the timestamps to avoid problems (core dumps on the phone!)
         timestamp = 0
         start_ms = 0.0
-        # print(start_ms)
+        self.log.debug(f"Session starting timestamp: {start_ms}")
         packet_number = 0
         while True:
             async with self._packet_queue:
@@ -37,7 +37,7 @@ class PolySession(Session):
                 if not any(self._packet_queue):
                     break
                 packet = self._packet_queue.pop(0)
-            # print(str(packet))
+            self.log.debug(f"Sending packet: {packet}")
 
             # sleep until the time for the next audio packet
             now_ms = self.__get_time_ms()
@@ -70,7 +70,7 @@ class PolySession(Session):
 
             # continue sending audio packets
 
-        print(f"Session {self.id} streaming complete")
+        self.log.info(f"Session {self.id} streaming complete")
 
         # timeout of stream then end packets
         await asyncio.sleep(0.050)

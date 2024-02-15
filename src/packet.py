@@ -1,14 +1,17 @@
 import socket
 import struct
 
+from log import Log
+
 _payload_g726qi = 0xFD
 _payload_g722 = 0x09
 _payload_g711u = 0x00
 
 
-class Packet:
+class Packet(Log):
 
-    def __init__(self, data: bytes, addr: str):
+    def __init__(self, log_name: str, data: bytes, addr: str):
+        super().__init__(log_name)
         self._version = 0
         self._has_padding = False
         self._has_extension_header = False

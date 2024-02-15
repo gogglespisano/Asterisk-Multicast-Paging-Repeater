@@ -1,5 +1,7 @@
 import asyncio
+import sys
 
+from log import Log
 from repeater import Repeater
 
 
@@ -11,5 +13,9 @@ async def main():
 
 
 if __name__ == '__main__':
+    Log.setup()
     loop = asyncio.new_event_loop()
-    loop.run_until_complete(main())
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        sys.exit()

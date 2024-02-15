@@ -3,14 +3,16 @@ import asyncio
 from asterisk_protocol import AsteriskProtocol
 from async_list import AsyncList
 from config import Config
+from log import Log
 from poly_packet import PolyPacket
 from poly_protocol import PolyProtocol
 from poly_session import PolySession
 from session import Session
 
 
-class Repeater:
+class Repeater(Log):
     def __init__(self):
+        super().__init__(__name__)
         self.__poly_transport = None
         self.__poly_protocol = None
         self.__asterisk_transport = None
@@ -21,6 +23,8 @@ class Repeater:
         Config.the().validate()
 
     def start(self):
+        self.log.info("Starting Multicast Paging Repeater")
+
         Session.on_end_of_session = self.on_end_of_session
 
         loop = asyncio.get_event_loop()
@@ -43,7 +47,7 @@ class Repeater:
     async def on_recv_asterisk_data(self, data: bytes, addr: (str, int)) -> None:
         try:
             packet = PolyPacket(data, addr[0])
-            # print(str(packet))
+            self.log.debug(f"Received packet: {packet}")
 
             # find the existing session or None if not found
             async with self.__sessions:
@@ -55,18 +59,18 @@ class Repeater:
                 async with self.__sessions:
                     session = PolySession(packet)
                     self.__sessions.append(session)
-                print(f"Session {session.id} begin")
+                self.log.info(f"Session {session.id} begin")
                 session.start()
 
             # add this packet to the session
             await session.on_packet(packet)
 
-        except Exception as ex:
+        except Exception as exc:
             # ignore bad incoming packets
-            print(ex)
+            self.log.warning("Bad Packet: %s", exc, exc_info=True)
 
     async def on_end_of_session(self, session):
         # remove the session for the list
         async with self.__sessions:
             self.__sessions.remove(session)
-        print(f"Session {session.id} end")
+        self.log.info(f"Session {session.id} end")
